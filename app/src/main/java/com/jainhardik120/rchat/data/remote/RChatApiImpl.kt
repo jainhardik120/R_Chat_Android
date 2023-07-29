@@ -1,56 +1,22 @@
 package com.jainhardik120.rchat.data.remote
 
-import android.content.SharedPreferences
 import com.jainhardik120.rchat.Result
-import com.jainhardik120.rchat.data.remote.dto.ChatRoom
-import com.jainhardik120.rchat.data.remote.dto.GroupInfo
-import com.jainhardik120.rchat.data.remote.dto.LoginRequest
-import com.jainhardik120.rchat.data.remote.dto.LoginResponse
-import com.jainhardik120.rchat.data.remote.dto.Message
-import com.jainhardik120.rchat.data.remote.dto.MessageError
-import com.jainhardik120.rchat.data.remote.dto.SignupRequest
+import com.jainhardik120.rchat.data.KeyValueStorage
+import com.jainhardik120.rchat.data.remote.dto.*
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.ClientRequestException
-import io.ktor.client.request.HttpRequestBuilder
-import io.ktor.client.request.bearerAuth
-import io.ktor.client.request.headers
-import io.ktor.client.request.request
-import io.ktor.client.request.setBody
-import io.ktor.http.ContentType
-import io.ktor.http.HeadersBuilder
-import io.ktor.http.HttpMethod
-import io.ktor.http.contentType
-import kotlinx.serialization.json.add
-import kotlinx.serialization.json.buildJsonArray
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
+import io.ktor.client.request.*
+import io.ktor.http.*
+import kotlinx.serialization.json.*
 
 class RChatApiImpl(
     private val client: HttpClient,
-    private val sharedPreferences: SharedPreferences
+    private val keyValueStorage: KeyValueStorage
 ) : RChatApi {
 
-    companion object {
-        private const val TOKEN_KEY = "TOKEN"
-        private const val EMAIL_KEY = "EMAIL"
-        private const val USER_ID_KEY = "USER_ID"
-    }
-
-    private fun checkToken(): Boolean {
-        return sharedPreferences.contains(TOKEN_KEY)
-    }
-
-    private fun getToken(): String? {
-        return sharedPreferences.getString(TOKEN_KEY, null)
-    }
-
     override fun saveLoginResponse(loginResponse: LoginResponse) {
-        with(sharedPreferences.edit()) {
-            putString(TOKEN_KEY, loginResponse.token)
-            putString(EMAIL_KEY, loginResponse.email)
-            putString(USER_ID_KEY, loginResponse.userId)
-        }.apply()
+       keyValueStorage.saveLoginResponse(loginResponse)
     }
 
     private suspend inline fun <T, reified R> performApiRequest(
@@ -60,7 +26,7 @@ class RChatApiImpl(
             val response = call.invoke()
             Result.Success(response)
         } catch (e: ClientRequestException) {
-            Result.ClientException(e.response.body<R>())
+            Result.ClientException(e.response.body<R>(), e.response.status)
         } catch (e: Exception) {
             Result.Exception(e.message)
         }
@@ -68,7 +34,7 @@ class RChatApiImpl(
 
     private fun HttpRequestBuilder.tokenAuthHeaders(headers: HeadersBuilder.() -> Unit = {}) {
         headers {
-            bearerAuth(token = getToken() ?: return@headers)
+            bearerAuth(token = keyValueStorage.getToken() ?: return@headers)
             headers()
         }
     }
@@ -114,10 +80,10 @@ class RChatApiImpl(
     }
 
 
-    override suspend fun chatMessages(chatRoomId: String): Result<List<Message>, MessageError> {
+    override suspend fun chatMessages(chatRoomId: String): Result<List<MessageDto>, MessageError> {
         return performApiRequest {
             requestBuilder(
-                APIRoutes.CHAT_HISTORY(chatRoomId),
+                APIRoutes.chatHistory(chatRoomId),
                 HttpMethod.Get
             )
         }
@@ -140,7 +106,7 @@ class RChatApiImpl(
         vararg users: String
     ): Result<GroupInfo, MessageError> {
         return performApiRequest {
-            requestBuilder(APIRoutes.ADD_TO_GROUP(groupId), HttpMethod.Put, buildJsonObject {
+            requestBuilder(APIRoutes.addToGroup(groupId), HttpMethod.Put, buildJsonObject {
                 put("userIdsToAdd", buildJsonArray {
                     users.forEach { user ->
                         this.add(user)
@@ -155,7 +121,7 @@ class RChatApiImpl(
         vararg users: String
     ): Result<GroupInfo, MessageError> {
         return performApiRequest {
-            requestBuilder(APIRoutes.REMOVE_FROM_GROUP(groupId), HttpMethod.Put, buildJsonObject {
+            requestBuilder(APIRoutes.removeFromGroup(groupId), HttpMethod.Put, buildJsonObject {
                 put("userIdsToRemove", buildJsonArray {
                     users.forEach { user ->
                         this.add(user)
@@ -167,13 +133,13 @@ class RChatApiImpl(
 
     override suspend fun leaveGroup(groupId: String): Result<GroupInfo, MessageError> {
         return performApiRequest {
-            requestBuilder(APIRoutes.LEAVE_GROUP(groupId), HttpMethod.Put)
+            requestBuilder(APIRoutes.leaveGroup(groupId), HttpMethod.Put)
         }
     }
 
-    override suspend fun getDirectChat(userId: String): Result<List<Message>, MessageError> {
+    override suspend fun getDirectChat(userId: String): Result<List<MessageDto>, MessageError> {
         return performApiRequest {
-            requestBuilder(APIRoutes.DIRECT_CHAT(userId), HttpMethod.Get)
+            requestBuilder(APIRoutes.directChat(userId), HttpMethod.Get)
         }
     }
 }

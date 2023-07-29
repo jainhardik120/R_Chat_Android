@@ -15,12 +15,23 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.jainhardik120.rchat.data.remote.RChatApi
 import com.jainhardik120.rchat.data.remote.dto.LoginRequest
+import com.jainhardik120.rchat.data.remote.dto.SignupRequest
+import com.jainhardik120.rchat.ui.presentation.App
 import com.jainhardik120.rchat.ui.theme.RChatTheme
 import dagger.hilt.android.AndroidEntryPoint
+import dagger.hilt.android.ViewModelLifecycle
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -28,10 +39,6 @@ private const val TAG = "MainActivity"
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
-
-    @Inject
-    lateinit var service : RChatApi
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,32 +48,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Column {
-                        val scope = rememberCoroutineScope()
-                        var email by remember { mutableStateOf("") }
-                        var password by remember { mutableStateOf("") }
-                        TextField(value = email, onValueChange = { email = it })
-                        TextField(value = password, onValueChange = { password = it })
-                        Button(onClick = {
-                            scope.launch {
-                                when (val response = service.createGroup(email)) {
-                                    is Result.ClientException -> {
-                                        Log.d(TAG, "ClientException: ${response.errorBody?.error}")
-                                    }
-
-                                    is Result.Exception -> {
-                                        Log.d(TAG, "Exception: ${response.errorMessage}")
-                                    }
-
-                                    is Result.Success -> {
-                                        Log.d(TAG, "Success: ${(response.data)}")
-                                    }
-                                }
-                            }
-                        }) {
-                            Text(text = "Login")
-                        }
-                    }
+                    App()
                 }
             }
         }

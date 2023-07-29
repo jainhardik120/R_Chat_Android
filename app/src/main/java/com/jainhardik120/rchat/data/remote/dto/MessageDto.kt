@@ -3,7 +3,7 @@ package com.jainhardik120.rchat.data.remote.dto
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class Message(
+data class MessageDto(
     val __v: Int,
     val _id: String,
     val chatRoomId: String,
