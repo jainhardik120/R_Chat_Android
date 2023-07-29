@@ -6,6 +6,6 @@ import kotlinx.serialization.Serializable
 data class ChatRoom(
     val _id: String,
     val chatroomName: String,
-    val lastMessage: String? = null,
+    val lastMessage: MessageDto? = null,
     val type: String
 )

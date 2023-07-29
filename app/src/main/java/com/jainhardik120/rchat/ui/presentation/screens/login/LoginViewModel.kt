@@ -117,22 +117,4 @@ class LoginViewModel @Inject constructor(
     }
 }
 
-data class LoginState(
-    val loginEmail: String = "",
-    val loginPassword: String = "",
-    val registerMail: String = "",
-    val registerPassword: String = "",
-    val registerUsername: String = "",
-    val loading: Boolean = false
-)
 
-
-sealed class LoginEvent {
-    data class LoginEmailChanged(val email: String) : LoginEvent()
-    data class LoginPasswordChanged(val password: String) : LoginEvent()
-    data class RegisterMailChanged(val email: String) : LoginEvent()
-    data class RegisterPasswordChanged(val password: String) : LoginEvent()
-    data class RegisterUsernameChanged(val username: String) : LoginEvent()
-    object LoginButtonClicked : LoginEvent()
-    object RegisterButtonClicked : LoginEvent()
-}

@@ -1,81 +1,62 @@
 package com.jainhardik120.rchat.ui.presentation.screens.home.chatlist
 
-import android.util.Log
 import androidx.compose.foundation.layout.Column
-import androidx.compose.material3.Button
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.jainhardik120.rchat.data.remote.ChatSocketService
-import com.jainhardik120.rchat.data.remote.dto.ChatMessage
-import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
-import javax.inject.Inject
+import com.jainhardik120.rchat.R
+import com.jainhardik120.rchat.ui.presentation.screens.home.HomeRoutes
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatListScreen() {
-
+fun ChatListScreen(
+    navigate: (String) -> Unit
+) {
     val viewModel = hiltViewModel<ChatListViewModel>()
+    val state by viewModel.state
+    val context = LocalContext.current
 
-    var room by rememberSaveable {
-        mutableStateOf("")
-    }
-
-    var message by rememberSaveable {
-        mutableStateOf("Hello Message")
-    }
-
-    Column {
-
-
-        OutlinedTextField(value = room, onValueChange = { room = it })
-        OutlinedTextField(value = message, onValueChange = { message = it })
-
-        Button(onClick = {
-            viewModel.sendMessage(room, message)
-        }) {
-            Text(text = "Send Message")
-        }
-
-    }
-}
-
-
-@HiltViewModel
-class ChatListViewModel @Inject constructor(
-    private val socketService: ChatSocketService
-) : ViewModel() {
-
-    companion object {
-        private const val TAG = "ChatListViewModel"
-    }
-    
-    private val messageFlow = socketService.messagesFlow
-
-    init {
-        viewModelScope.launch { 
-            messageFlow.collect{message->
-                Log.d(TAG, "NewMessage: $message")
+    Scaffold(topBar = {
+        TopAppBar(title = { context.resources.getString(R.string.app_name) }, actions = {
+            IconButton(onClick = { viewModel.loadList() }) {
+                Icon(imageVector = Icons.Rounded.Refresh, contentDescription = "Refresh Icon")
+            }
+        })
+    }) {
+        LazyColumn(
+            modifier = Modifier
+                .padding(it)
+                .fillMaxSize(),
+        ) {
+            itemsIndexed(state.chatRooms, key = { _, item ->
+                item._id
+            }) { _, item ->
+                Surface(onClick = {
+                    navigate(HomeRoutes.ChatMessages.withArgs(item._id))
+                }) {
+                    Column {
+                        Text(text = item.chatroomName)
+                        Text(text = item.lastMessage?.content ?: "New Chat")
+                    }
+                }
             }
         }
     }
-
-
-    fun sendMessage(chatRoomId: String, message: String) {
-        viewModelScope.launch {
-            socketService.sendMessage(ChatMessage(chatRoomId, message))
-        }
-    }
 }
+
+
