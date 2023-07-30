@@ -1,7 +1,6 @@
 package com.jainhardik120.rchat.data
 
 import android.content.SharedPreferences
-import android.util.Log
 import com.jainhardik120.rchat.data.remote.dto.LoginResponse
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,9 +44,9 @@ class KeyValueStorage(
         const val USER_ID_KEY = "USER_ID"
     }
 
-    private fun getValue(key: String): String? {
-        return sharedPreferences.getString(key, null)
-    }
+     fun getValue(key: String): String? {
+         return sharedPreferences.getString(key, null)
+     }
 
     private fun storeValue(key: String, value: String) {
         sharedPreferences.edit()

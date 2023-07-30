@@ -11,4 +11,7 @@ data class MessageDto(
     val createdAt: String,
     val senderId: SenderId,
     val updatedAt: String
-)
+) {
+    val authorId = this.senderId._id
+    val authorUserName = this.senderId.username
+}

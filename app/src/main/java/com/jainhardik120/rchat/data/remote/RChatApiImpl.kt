@@ -6,8 +6,8 @@ import com.jainhardik120.rchat.data.remote.dto.ChatRoom
 import com.jainhardik120.rchat.data.remote.dto.GroupInfo
 import com.jainhardik120.rchat.data.remote.dto.LoginRequest
 import com.jainhardik120.rchat.data.remote.dto.LoginResponse
-import com.jainhardik120.rchat.data.remote.dto.MessageDto
 import com.jainhardik120.rchat.data.remote.dto.MessageError
+import com.jainhardik120.rchat.data.remote.dto.PaginatedMessageResponse
 import com.jainhardik120.rchat.data.remote.dto.SignupRequest
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -95,11 +95,14 @@ class RChatApiImpl(
         return performApiRequest { requestBuilder(APIRoutes.CHAT_ROOMS, HttpMethod.Get) }
     }
 
-
-    override suspend fun chatMessages(chatRoomId: String): Result<List<MessageDto>, MessageError> {
+    override suspend fun chatMessages(
+        chatRoomId: String,
+        page: Int,
+        limit: Int
+    ): Result<PaginatedMessageResponse, MessageError> {
         return performApiRequest {
             requestBuilder(
-                APIRoutes.chatHistory(chatRoomId),
+                APIRoutes.chatHistory(chatRoomId, page, limit),
                 HttpMethod.Get
             )
         }
@@ -153,7 +156,7 @@ class RChatApiImpl(
         }
     }
 
-    override suspend fun getDirectChat(userId: String): Result<List<MessageDto>, MessageError> {
+    override suspend fun getDirectChat(userId: String): Result<ChatRoom, MessageError> {
         return performApiRequest {
             requestBuilder(APIRoutes.directChat(userId), HttpMethod.Get)
         }

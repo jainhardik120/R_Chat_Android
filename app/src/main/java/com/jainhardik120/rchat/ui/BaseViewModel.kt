@@ -25,6 +25,11 @@ abstract class BaseViewModel : ViewModel() {
         }
     }
 
+    open fun onTextException(message: String) {
+        sendUiEvent(UiEvent.ShowSnackbar(message))
+
+    }
+
     protected fun <T, R> makeApiCall(
         call: suspend () -> Result<T, R>,
         preExecuting: (() -> Unit)? = {
@@ -35,7 +40,7 @@ abstract class BaseViewModel : ViewModel() {
         },
         onException: (String) -> Unit = { errorMessage ->
             Log.d(TAG, "makeApiCall: $errorMessage")
-            sendUiEvent(UiEvent.ShowSnackbar(errorMessage))
+            onTextException(errorMessage)
         },
         onError: (R) -> Unit = { errorBody ->
             if (errorBody is MessageError) {
