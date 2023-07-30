@@ -13,5 +13,7 @@ interface ChatSocketService {
     suspend fun close()
 
     suspend fun sendMessage(message: ChatMessage)
+
+    suspend fun checkAndReload()
 }
 

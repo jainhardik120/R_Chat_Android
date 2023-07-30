@@ -64,4 +64,14 @@ class ChatSocketServiceImpl(
     override suspend fun close() {
         socket?.close()
     }
+
+    override suspend fun checkAndReload() {
+        try {
+            if (!isActive()) {
+                init()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
 }

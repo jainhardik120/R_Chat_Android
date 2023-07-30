@@ -3,10 +3,10 @@ package com.jainhardik120.rchat.data.remote
 import com.jainhardik120.rchat.Result
 import com.jainhardik120.rchat.data.remote.dto.ChatRoom
 import com.jainhardik120.rchat.data.remote.dto.GroupInfo
-import com.jainhardik120.rchat.data.remote.dto.MessageError
 import com.jainhardik120.rchat.data.remote.dto.LoginRequest
 import com.jainhardik120.rchat.data.remote.dto.LoginResponse
 import com.jainhardik120.rchat.data.remote.dto.MessageDto
+import com.jainhardik120.rchat.data.remote.dto.MessageError
 import com.jainhardik120.rchat.data.remote.dto.SignupRequest
 
 interface RChatApi {
@@ -21,4 +21,5 @@ interface RChatApi {
     suspend fun removeUser(groupId: String, vararg users: String): Result<GroupInfo, MessageError>
     suspend fun leaveGroup(groupId: String): Result<GroupInfo, MessageError>
     suspend fun getDirectChat(userId: String): Result<List<MessageDto>, MessageError>
+    suspend fun getRoomDetails(roomId: String): Result<ChatRoom, MessageError>
 }

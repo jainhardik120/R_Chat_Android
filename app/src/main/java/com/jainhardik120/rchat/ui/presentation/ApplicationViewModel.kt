@@ -1,6 +1,5 @@
 package com.jainhardik120.rchat.ui.presentation
 
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -21,7 +20,6 @@ class ApplicationViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             keyValueStorage.isLoggedIn.collect{
-                Log.d("TAG", "isLoggedIn: $it")
                 isLoggedIn = it
             }
         }

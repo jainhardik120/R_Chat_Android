@@ -3,14 +3,12 @@ package com.jainhardik120.rchat.ui.presentation.screens.home.chatlist
 import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.jainhardik120.rchat.Result
 import com.jainhardik120.rchat.data.remote.ChatSocketService
 import com.jainhardik120.rchat.data.remote.RChatApi
 import com.jainhardik120.rchat.data.remote.dto.ChatRoom
 import com.jainhardik120.rchat.data.remote.dto.MessageDto
-import com.jainhardik120.rchat.data.remote.dto.MessageError
+import com.jainhardik120.rchat.ui.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -19,7 +17,7 @@ import javax.inject.Inject
 class ChatListViewModel @Inject constructor(
     private val socketService: ChatSocketService,
     private val api: RChatApi
-) : ViewModel() {
+) : BaseViewModel() {
 
     companion object {
         private const val TAG = "ChatListViewModel"
@@ -29,44 +27,6 @@ class ChatListViewModel @Inject constructor(
     val state: State<ChatListState> = _state
 
     private val chatIdMap: MutableMap<String, Int> = hashMapOf()
-
-    private fun <T, R> makeApiCall(
-        call: suspend () -> Result<T, R>,
-        preExecuting: (() -> Unit)? = {
-
-        },
-        onDoneExecuting: (() -> Unit)? = {
-
-        },
-        onException: (String) -> Unit = { errorMessage ->
-            Log.d(TAG, "makeApiCall: $errorMessage")
-        },
-        onError: (R) -> Unit = { errorBody ->
-            if (errorBody is MessageError) {
-                onException(errorBody.error)
-            }
-        },
-        onSuccess: (T) -> Unit
-    ) {
-        viewModelScope.launch {
-            preExecuting?.invoke()
-            val result = call.invoke()
-            onDoneExecuting?.invoke()
-            when (result) {
-                is Result.ClientException -> {
-                    result.errorBody?.let(onError)
-                }
-
-                is Result.Exception -> {
-                    result.errorMessage?.let(onException)
-                }
-
-                is Result.Success -> {
-                    result.data?.let(onSuccess)
-                }
-            }
-        }
-    }
 
     init {
         viewModelScope.launch {
@@ -97,7 +57,7 @@ class ChatListViewModel @Inject constructor(
             val updatedList = listOf(
                 ChatRoom(
                     _id = chatRoom,
-                    chatroomName = "New Chat",
+                    chatroomName = "Loading...",
                     type = "",
                     lastMessage = message
                 )
@@ -106,6 +66,7 @@ class ChatListViewModel @Inject constructor(
             _state.value = _state.value.copy(
                 chatRooms = updatedList
             )
+            loadAndUpdateSingleRoom(chatRoom)
         }
     }
 
@@ -116,12 +77,40 @@ class ChatListViewModel @Inject constructor(
         }
     }
 
+    private fun checkSocketState() {
+        viewModelScope.launch {
+            socketService.checkAndReload()
+        }
+    }
+
+    private fun loadAndUpdateSingleRoom(roomId: String) {
+        makeApiCall({
+            api.getRoomDetails(roomId)
+        }) { room ->
+            chatIdMap[roomId]?.let { index ->
+                val list = _state.value.chatRooms.toMutableList()
+                if (list[index]._id == room._id) {
+                    list[index] = room
+                    _state.value = _state.value.copy(chatRooms = list)
+                    constructMap(list)
+                }
+            }
+        }
+    }
+
     fun loadList() {
-        makeApiCall(call = {
-            api.chatRooms()
-        }) {
+        makeApiCall(
+            call = {
+                api.chatRooms()
+            },
+            preExecuting = { _state.value = _state.value.copy(isLoading = true) },
+            onDoneExecuting = {
+                _state.value = _state.value.copy(isLoading = false)
+                checkSocketState()
+            }) {
             constructMap(it)
             _state.value = _state.value.copy(chatRooms = it)
         }
     }
+
 }

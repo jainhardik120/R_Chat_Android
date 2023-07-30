@@ -10,6 +10,7 @@ object APIRoutes {
 
     private const val MESSAGE_ROUTE = "$BASE_URL/message"
     const val CHAT_ROOMS = "$MESSAGE_ROUTE/chat-rooms"
+    fun chatRoom(roomId: String): String = "$MESSAGE_ROUTE/chat-rooms/$roomId"
     fun directChat(userId: String): String = "$MESSAGE_ROUTE/direct-chat/$userId"
     fun chatHistory(chatRoomId: String): String = "$MESSAGE_ROUTE/chat-history/$chatRoomId"
     fun addToGroup(groupId: String): String = "$MESSAGE_ROUTE/add-user-to-group/$groupId"

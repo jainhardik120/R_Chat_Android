@@ -1,23 +1,18 @@
 package com.jainhardik120.rchat.ui.presentation.screens.login
 
-import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.jainhardik120.rchat.Result
 import com.jainhardik120.rchat.data.remote.RChatApi
 import com.jainhardik120.rchat.data.remote.dto.LoginRequest
-import com.jainhardik120.rchat.data.remote.dto.MessageError
 import com.jainhardik120.rchat.data.remote.dto.SignupRequest
+import com.jainhardik120.rchat.ui.BaseViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val api: RChatApi
-) : ViewModel() {
+) : BaseViewModel() {
 
     companion object {
         private const val TAG = "LoginViewModel"
@@ -26,43 +21,12 @@ class LoginViewModel @Inject constructor(
     private val _loginState = mutableStateOf(LoginState())
     val loginState: State<LoginState> = _loginState
 
+    private fun onLoadingStart() {
+        _loginState.value = _loginState.value.copy(loading = true)
+    }
 
-    private fun <T, R> makeApiCall(
-        call: suspend () -> Result<T, R>,
-        preExecuting: (() -> Unit)? = {
-            _loginState.value = _loginState.value.copy(loading = true)
-        },
-        onDoneExecuting: (() -> Unit)? = {
-            _loginState.value = _loginState.value.copy(loading = false)
-        },
-        onException: (String) -> Unit = { errorMessage ->
-            Log.d(TAG, "makeApiCall: $errorMessage")
-        },
-        onError: (R) -> Unit = { errorBody ->
-            if (errorBody is MessageError) {
-                onException(errorBody.error)
-            }
-        },
-        onSuccess: (T) -> Unit
-    ) {
-        viewModelScope.launch {
-            preExecuting?.invoke()
-            val result = call.invoke()
-            onDoneExecuting?.invoke()
-            when (result) {
-                is Result.ClientException -> {
-                    result.errorBody?.let(onError)
-                }
-
-                is Result.Exception -> {
-                    result.errorMessage?.let(onException)
-                }
-
-                is Result.Success -> {
-                    result.data?.let(onSuccess)
-                }
-            }
-        }
+    private fun onLoadingStop() {
+        _loginState.value = _loginState.value.copy(loading = false)
     }
 
     fun onLoginEvent(event: LoginEvent) {
@@ -95,7 +59,7 @@ class LoginViewModel @Inject constructor(
                             password = _loginState.value.loginPassword
                         )
                     )
-                }) {
+                }, preExecuting = { onLoadingStart() }, onDoneExecuting = { onLoadingStop() }) {
                     api.saveLoginResponse(it)
                 }
             }
@@ -109,7 +73,7 @@ class LoginViewModel @Inject constructor(
                             username = _loginState.value.registerUsername
                         )
                     )
-                }) {
+                }, preExecuting = { onLoadingStart() }, onDoneExecuting = { onLoadingStop() }) {
                     api.saveLoginResponse(it)
                 }
             }

@@ -1,8 +1,6 @@
 package com.jainhardik120.rchat.di
 
-import android.app.Application
 import android.content.Context
-import android.content.SharedPreferences
 import com.jainhardik120.rchat.R
 import com.jainhardik120.rchat.data.KeyValueStorage
 import com.jainhardik120.rchat.data.remote.ChatSocketService
@@ -16,6 +14,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logging
@@ -36,13 +35,18 @@ object AppModule {
             install(Logging) {
                 level = LogLevel.ALL
             }
-            install(WebSockets)
+            install(WebSockets) {
+                pingInterval = 10_000
+            }
             install(ContentNegotiation) {
                 json(
                     kotlinx.serialization.json.Json {
                         ignoreUnknownKeys = true
                     }
                 )
+            }
+            install(HttpTimeout) {
+                requestTimeoutMillis = 50000
             }
         }
     }

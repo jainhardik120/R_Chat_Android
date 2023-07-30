@@ -2,13 +2,29 @@ package com.jainhardik120.rchat.data.remote
 
 import com.jainhardik120.rchat.Result
 import com.jainhardik120.rchat.data.KeyValueStorage
-import com.jainhardik120.rchat.data.remote.dto.*
+import com.jainhardik120.rchat.data.remote.dto.ChatRoom
+import com.jainhardik120.rchat.data.remote.dto.GroupInfo
+import com.jainhardik120.rchat.data.remote.dto.LoginRequest
+import com.jainhardik120.rchat.data.remote.dto.LoginResponse
+import com.jainhardik120.rchat.data.remote.dto.MessageDto
+import com.jainhardik120.rchat.data.remote.dto.MessageError
+import com.jainhardik120.rchat.data.remote.dto.SignupRequest
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.ClientRequestException
-import io.ktor.client.request.*
-import io.ktor.http.*
-import kotlinx.serialization.json.*
+import io.ktor.client.request.HttpRequestBuilder
+import io.ktor.client.request.bearerAuth
+import io.ktor.client.request.headers
+import io.ktor.client.request.request
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.HeadersBuilder
+import io.ktor.http.HttpMethod
+import io.ktor.http.contentType
+import kotlinx.serialization.json.add
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 class RChatApiImpl(
     private val client: HttpClient,
@@ -16,7 +32,7 @@ class RChatApiImpl(
 ) : RChatApi {
 
     override fun saveLoginResponse(loginResponse: LoginResponse) {
-       keyValueStorage.saveLoginResponse(loginResponse)
+        keyValueStorage.saveLoginResponse(loginResponse)
     }
 
     private suspend inline fun <T, reified R> performApiRequest(
@@ -140,6 +156,12 @@ class RChatApiImpl(
     override suspend fun getDirectChat(userId: String): Result<List<MessageDto>, MessageError> {
         return performApiRequest {
             requestBuilder(APIRoutes.directChat(userId), HttpMethod.Get)
+        }
+    }
+
+    override suspend fun getRoomDetails(roomId: String): Result<ChatRoom, MessageError> {
+        return performApiRequest {
+            requestBuilder(APIRoutes.chatRoom(roomId), HttpMethod.Get)
         }
     }
 }

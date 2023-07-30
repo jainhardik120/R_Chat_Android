@@ -16,7 +16,7 @@ fun HomeScreen() {
     val viewModel = hiltViewModel<HomeViewModel>()
     NavHost(navController = navController, startDestination = HomeRoutes.ChatList.route) {
         composable(HomeRoutes.ChatList.route) {
-            ChatListScreen { navController.navigate(it) }
+            ChatListScreen(navController)
         }
         composable(HomeRoutes.ChatMessages.route + "/{chatId}", arguments = listOf(
             navArgument("chatId") {
